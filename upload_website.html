@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        iconify-icon {
+            stroke-width: 1.5;
+        }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e4e4e7;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d4d4d8;
+        }
+    </style>
+</head>
+<body class="bg-zinc-50 text-zinc-900 flex flex-col md:flex-row h-screen overflow-hidden antialiased selection:bg-blue-100 selection:text-blue-900">
+
+    <!-- Mobile Header -->
+    <header class="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-zinc-200 z-20 shrink-0">
+        <div class="flex items-center gap-2 text-sm font-semibold tracking-tighter uppercase text-zinc-900">
+            <div class="w-6 h-6 bg-zinc-900 text-white rounded flex items-center justify-center text-xs">EV</div>
+            EDU_VAULT
+        </div>
+        <button class="text-zinc-500 hover:text-zinc-900 transition-colors p-1">
+            <iconify-icon icon="solar:hamburger-menu-linear" class="text-xl"></iconify-icon>
+        </button>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-zinc-100/40 border-r border-zinc-200 flex-col hidden md:flex shrink-0">
+        <!-- Logo -->
+        <div class="p-5 border-b border-zinc-200/50">
+            <div class="flex items-center gap-2.5 text-base font-semibold tracking-tighter uppercase text-zinc-900">
+                <div class="w-7 h-7 bg-zinc-900 text-white rounded-md flex items-center justify-center text-xs shadow-sm">EV</div>
+                EDU_VAULT
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="p-3 flex-1 overflow-y-auto space-y-6">
+            
+            <!-- School Context -->
+            <div class="px-2">
+                <div class="flex items-center gap-2 text-xs font-medium text-zinc-500 mb-1">
+                    <iconify-icon icon="solar:buildings-2-linear"></iconify-icon>
+                    SCH-2026-ALPHA
+                </div>
+                <div class="text-xs text-zinc-400 pl-5">Year: 2026-27</div>
+            </div>
+
+            <!-- Vaults List -->
+            <div>
+                <div class="text-xs font-medium text-zinc-500 mb-2 px-2 uppercase tracking-widest">Isolated Vaults</div>
+                <div class="space-y-1">
+                    <!-- Active: Class 10 -->
+                    <a href="#" class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-zinc-200 text-sm font-medium text-zinc-900 shadow-sm group">
+                        <div class="flex items-center gap-3">
+                            <iconify-icon icon="solar:folder-with-files-linear" class="text-[#1E3A8A] text-lg"></iconify-icon>
+                            Class 10
+                        </div>
+                        <span class="text-xs text-zinc-400 font-normal">2 items</span>
+                    </a>
+
+                    <!-- Inactive: Class 9 -->
+                    <a href="#" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-200/50 hover:text-zinc-900 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-1.5 h-1.5 rounded-full bg-[#064E3B] opacity-50"></div>
+                            Class 9
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Bottom Actions -->
+        <div class="p-3 border-t border-zinc-200/50">
+            <button class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-200/50 hover:text-zinc-900 transition-colors">
+                <iconify-icon icon="solar:settings-linear" class="text-zinc-400 text-lg"></iconify-icon>
+                System Config
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area (Vault View) -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-white relative">
+        
+        <!-- Subtle background pattern -->
+        <div class="absolute inset-0 bg-[linear-gradient(to_right,#f4f4f5_1px,transparent_1px),linear-gradient(to_bottom,#f4f4f5_1px,transparent_1px)] bg-[size:24px_24px] opacity-20 pointer-events-none"></div>
+
+        <!-- Vault Header -->
+        <header class="px-6 md:px-10 py-8 border-b border-zinc-200 bg-white/80 backdrop-blur-md z-10 flex flex-col md:flex-row md:items-end justify-between gap-4 shrink-0 relative">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="p-1.5 rounded-md bg-[#1E3A8A]/10 text-[#1E3A8A]">
+                        <iconify-icon icon="solar:folder-with-files-linear" class="text-xl block"></iconify-icon>
+                    </div>
+                    <h1 class="text-2xl font-semibold tracking-tight text-zinc-900">
+                        Class 10 Vault
+                    </h1>
+                    <span class="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">Restricted</span>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-y-1 gap-x-3 text-sm text-zinc-500">
+                    <span class="flex items-center gap-1.5">
+                        <iconify-icon icon="solar:users-group-rounded-linear" class="text-zinc-400"></iconify-icon>
+                        32 Students
+                    </span>
+                    <span class="text-zinc-300">•</span>
+                    <span class="flex items-center gap-1.5">
+                        <iconify-icon icon="solar:documents-minimalistic-linear" class="text-zinc-400"></iconify-icon>
+                        2 Materials
+                    </span>
+                    <span class="text-zinc-300">•</span>
+                    <span class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-[#1E3A8A]"></span>
+                        Theme
+                    </span>
+                </div>
+            </div>
+
+            <button class="inline-flex items-center justify-center gap-2 bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors shadow-sm w-full md:w-auto ring-1 ring-zinc-900/10">
+                <iconify-icon icon="solar:add-circle-linear" class="text-lg"></iconify-icon>
+                New Material
+            </button>
+        </header>
+
+        <!-- Scrollable Content -->
+        <div class="p-6 md:p-10 overflow-y-auto flex-1 relative z-0 bg-zinc-50/30">
+            
+            <div class="max-w-7xl mx-auto space-y-12">
+                
+                <!-- Document Grid -->
+                <section>
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-semibold tracking-tight text-zinc-900">Curriculum Materials</h2>
+                        <div class="flex items-center gap-2">
+                            <button class="p-1.5 text-zinc-400 hover:text-zinc-900 rounded-md hover:bg-zinc-100 transition-colors">
+                                <iconify-icon icon="solar:sort-by-time-linear" class="text-lg"></iconify-icon>
+                            </button>
+                            <button class="p-1.5 text-zinc-900 bg-zinc-100 rounded-md transition-colors">
+                                <iconify-icon icon="solar:widget-5-linear" class="text-lg"></iconify-icon>
+                            </button>
+                            <button class="p-1.5 text-zinc-400 hover:text-zinc-900 rounded-md hover:bg-zinc-100 transition-colors">
+                                <iconify-icon icon="solar:list-linear" class="text-lg"></iconify-icon>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        
+                        <!-- Material Card 1: Math -->
+                        <article class="group bg-white rounded-xl border border-zinc-200 p-5 shadow-sm hover:shadow-md hover:border-zinc-300 transition-all duration-200 flex flex-col relative overflow-hidden cursor-pointer">
+                            <!-- Theme Color Indicator -->
+                            <div class="absolute top-0 left-0 w-full h-1 bg-[#1E3A8A] opacity-80"></div>
+                            
+                            <div class="flex items-start justify-between mb-4 mt-1">
+                                <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center ring-1 ring-inset ring-blue-600/10">
+                                    <iconify-icon icon="solar:calculator-minimalistic-linear" class="text-xl"></iconify-icon>
+                                </div>
+                                <button class="text-zinc-400 hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                                    <iconify-icon icon="solar:menu-dots-bold" class="text-lg"></iconify-icon>
+                                </button>
+                            </div>
+
+                            <div class="mb-5 flex-1">
+                                <span class="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 block">Mathematics</span>
+                                <h3 class="text-sm font-medium text-zinc-900 leading-snug break-words group-hover:text-[#1E3A8A] transition-colors">
+                                    Trigonometry_Advanced_V1.pdf
+                                </h3>
+                                <div class="mt-2 flex items-center gap-2">
+                                     <span class="inline-flex items-center rounded-md bg-zinc-50 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 ring-1 ring-inset ring-zinc-500/10 border border-zinc-200">PDF</span>
+                                     <span class="text-xs text-zinc-400">c10_pdf_01</span>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-zinc-100 flex items-center justify-between mt-auto">
+                                <span class="text-xs text-zinc-500 flex items-center gap-1.5">
+                                    <iconify-icon icon="solar:calendar-linear" class="text-zinc-400"></iconify-icon> 
+                                    <time datetime="2026-03-03">Mar 3, 2026</time>
+                                </span>
+                                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity -mr-1">
+                                    <button class="p-1.5 text-zinc-400 hover:text-[#1E3A8A] hover:bg-blue-50 rounded-md transition-colors" title="Preview">
+                                        <iconify-icon icon="solar:eye-linear" class="text-base"></iconify-icon>
+                                    </button>
+                                    <button class="p-1.5 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition-colors" title="Download">
+                                        <iconify-icon icon="solar:download-minimalistic-linear" class="text-base"></iconify-icon>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <!-- Material Card 2: Physics -->
+                        <article class="group bg-white rounded-xl border border-zinc-200 p-5 shadow-sm hover:shadow-md hover:border-zinc-300 transition-all duration-200 flex flex-col relative overflow-hidden cursor-pointer">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-[#1E3A8A] opacity-80"></div>
+                            
+                            <div class="flex items-start justify-between mb-4 mt-1">
+                                <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center ring-1 ring-inset ring-indigo-600/10">
+                                    <iconify-icon icon="solar:atom-linear" class="text-xl"></iconify-icon>
+                                </div>
+                                <button class="text-zinc-400 hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                                    <iconify-icon icon="solar:menu-dots-bold" class="text-lg"></iconify-icon>
+                                </button>
+                            </div>
+
+                            <div class="mb-5 flex-1">
+                                <span class="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 block">Physics</span>
+                                <h3 class="text-sm font-medium text-zinc-900 leading-snug break-words group-hover:text-[#1E3A8A] transition-colors">
+                                    Quantum_Mechanics_Intro.pdf
+                                </h3>
+                                <div class="mt-2 flex items-center gap-2">
+                                     <span class="inline-flex items-center rounded-md bg-zinc-50 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 ring-1 ring-inset ring-zinc-500/10 border border-zinc-200">PDF</span>
+                                     <span class="text-xs text-zinc-400">c10_pdf_02</span>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-zinc-100 flex items-center justify-between mt-auto">
+                                <span class="text-xs text-zinc-500 flex items-center gap-1.5">
+                                    <iconify-icon icon="solar:calendar-linear" class="text-zinc-400"></iconify-icon> 
+                                    <time datetime="2026-03-03">Mar 3, 2026</time>
+                                </span>
+                                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity -mr-1">
+                                    <button class="p-1.5 text-zinc-400 hover:text-[#1E3A8A] hover:bg-blue-50 rounded-md transition-colors" title="Preview">
+                                        <iconify-icon icon="solar:eye-linear" class="text-base"></iconify-icon>
+                                    </button>
+                                    <button class="p-1.5 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition-colors" title="Download">
+                                        <iconify-icon icon="solar:download-minimalistic-linear" class="text-base"></iconify-icon>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+
+                    </div>
+                </section>
+
+                <!-- File Dropzone -->
+                <section>
+                    <div class="flex items-center gap-2 mb-4">
+                        <iconify-icon icon="solar:cloud-upload-linear" class="text-zinc-400 text-lg"></iconify-icon>
+                        <h2 class="text-base font-semibold tracking-tight text-zinc-900">Upload Portal</h2>
+                    </div>
+                    
+                    <div class="border-2 border-dashed border-zinc-200 rounded-2xl bg-white/50 p-12 flex flex-col items-center justify-center text-center hover:bg-zinc-50/80 hover:border-zinc-300 transition-all cursor-pointer group">
+                        <div class="w-14 h-14 bg-white border border-zinc-200 shadow-sm rounded-full flex items-center justify-center text-zinc-500 mb-4 group-hover:scale-105 group-hover:text-zinc-900 transition-all duration-300">
+                            <iconify-icon icon="solar:upload-minimalistic-linear" class="text-2xl"></iconify-icon>
+                        </div>
+                        <p class="text-sm font-medium text-zinc-900 mb-1">Click to select files or drag and drop</p>
+                        <p class="text-xs text-zinc-500 max-w-sm">
+                            Documents will automatically inherit metadata schema and be scoped exclusively to the <span class="font-medium text-zinc-700">class_10</span> array.
+                        </p>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>
+
