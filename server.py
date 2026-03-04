@@ -10,6 +10,7 @@ import os
 import json
 from datetime import datetime
 from typing import List, Dict, Any
+import time
 
 # Load environment variables
 load_dotenv()
@@ -19,6 +20,8 @@ BUCKET_NAME = os.getenv('S3_BUCKET_NAME', 'my-nova-rag-data')
 AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
 ACCESS_KEY_ID = os.getenv('BEDROCK_UPLOAD_ACCESS_KEY_ID')
 SECRET_ACCESS_KEY = os.getenv('BEDROCK_UPLOAD_SECRET_ACCESS_KEY')
+KNOWLEDGE_BASE_ID = os.getenv('KNOWLEDGE_BASE_ID')
+DATA_SOURCE_ID = os.getenv('DATA_SOURCE_ID')  # New: Data source ID
 
 # Initialize FastAPI app
 app = FastAPI(title="Miro API", version="1.0.0")
@@ -40,10 +43,104 @@ s3_client = boto3.client(
     aws_secret_access_key=SECRET_ACCESS_KEY
 )
 
+# Initialize Bedrock Agent client for Knowledge Base sync
+bedrock_agent_client = boto3.client(
+    'bedrock-agent',
+    region_name=AWS_REGION,
+    aws_access_key_id=ACCESS_KEY_ID,
+    aws_secret_access_key=SECRET_ACCESS_KEY
+)
+
 @app.get("/")
 async def root():
     """Root endpoint."""
     return {"message": "Miro API", "version": "1.0.0"}
+
+def trigger_knowledge_base_sync():
+    """Trigger Knowledge Base data source sync/ingestion."""
+    if not KNOWLEDGE_BASE_ID or not DATA_SOURCE_ID:
+        print("⚠️  Warning: KNOWLEDGE_BASE_ID or DATA_SOURCE_ID not configured. Skipping sync.")
+        return None
+    
+    try:
+        print(f"🔄 Triggering Knowledge Base sync...")
+        response = bedrock_agent_client.start_ingestion_job(
+            knowledgeBaseId=KNOWLEDGE_BASE_ID,
+            dataSourceId=DATA_SOURCE_ID,
+            description="Auto-sync after document upload"
+        )
+        
+        ingestion_job_id = response['ingestionJob']['ingestionJobId']
+        print(f"✅ Sync job started: {ingestion_job_id}")
+        return ingestion_job_id
+        
+    except Exception as e:
+        print(f"❌ Error triggering sync: {e}")
+        return None
+
+def check_ingestion_status(ingestion_job_id):
+    """Check the status of an ingestion job."""
+    try:
+        response = bedrock_agent_client.get_ingestion_job(
+            knowledgeBaseId=KNOWLEDGE_BASE_ID,
+            dataSourceId=DATA_SOURCE_ID,
+            ingestionJobId=ingestion_job_id
+        )
+        return response['ingestionJob']['status']
+    except Exception as e:
+        print(f"Error checking ingestion status: {e}")
+        return None
+
+@app.post("/api/sync-knowledge-base")
+async def sync_knowledge_base():
+    """Manually trigger Knowledge Base sync."""
+    if not KNOWLEDGE_BASE_ID or not DATA_SOURCE_ID:
+        raise HTTPException(
+            status_code=400, 
+            detail="Knowledge Base ID or Data Source ID not configured"
+        )
+    
+    try:
+        ingestion_job_id = trigger_knowledge_base_sync()
+        
+        if not ingestion_job_id:
+            raise HTTPException(status_code=500, detail="Failed to start sync job")
+        
+        return {
+            "message": "Knowledge Base sync started",
+            "ingestion_job_id": ingestion_job_id,
+            "status": "STARTING"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/sync-status/{ingestion_job_id}")
+async def get_sync_status(ingestion_job_id: str):
+    """Get the status of a Knowledge Base sync job."""
+    if not KNOWLEDGE_BASE_ID or not DATA_SOURCE_ID:
+        raise HTTPException(
+            status_code=400, 
+            detail="Knowledge Base ID or Data Source ID not configured"
+        )
+    
+    try:
+        status = check_ingestion_status(ingestion_job_id)
+        
+        if not status:
+            raise HTTPException(status_code=404, detail="Ingestion job not found")
+        
+        return {
+            "ingestion_job_id": ingestion_job_id,
+            "status": status
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/documents")
 async def list_documents():
@@ -321,13 +418,21 @@ async def upload_document(
             "filename": file.filename,
             "class": class_num,
             "subject": subject,
-            "size": len(file_content)
+            "size": len(file_content),
+            "sync_triggered": False
         }
         
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Trigger Knowledge Base sync in background (non-blocking)
+        try:
+            if KNOWLEDGE_BASE_ID and DATA_SOURCE_ID:
+                trigger_knowledge_base_sync()
+        except:
+            pass  # Don't fail upload if sync fails
 
 @app.get("/health")
 async def health_check():

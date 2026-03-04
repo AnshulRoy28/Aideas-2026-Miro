@@ -1,0 +1,21 @@
+{
+  "LambdaFunctionConfigurations": [
+    {
+      "LambdaFunctionArn": "arn:aws:lambda:us-east-1:YOUR_ACCOUNT_ID:function:sync-knowledge-base",
+      "Events": [
+        "s3:ObjectCreated:*",
+        "s3:ObjectRemoved:*"
+      ],
+      "Filter": {
+        "Key": {
+          "FilterRules": [
+            {
+              "Name": "suffix",
+              "Value": ".pdf"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
