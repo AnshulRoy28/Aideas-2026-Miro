@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Upload PDF files to S3 bucket for Bedrock Knowledge Base."""
+"""Upload PDF files to S3 bucket for Miro Knowledge Base."""
 
 import boto3
 import os
@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-BUCKET_NAME = 'my-nova-rag-data'
+BUCKET_NAME = os.getenv('S3_BUCKET_NAME', 'my-nova-rag-data')
 AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
 ACCESS_KEY_ID = os.getenv('BEDROCK_UPLOAD_ACCESS_KEY_ID')
 SECRET_ACCESS_KEY = os.getenv('BEDROCK_UPLOAD_SECRET_ACCESS_KEY')
@@ -40,6 +40,17 @@ def upload_pdf_to_s3(pdf_path):
     file_name = os.path.basename(pdf_path)
     
     try:
+        # Check if file already exists in S3
+        try:
+            s3.head_object(Bucket=BUCKET_NAME, Key=file_name)
+            print(f"❌ Error: A file with the name '{file_name}' already exists in the bucket")
+            print(f"   Please rename your file or delete the existing one first")
+            return False
+        except s3.exceptions.ClientError as e:
+            # If a 404 error, the file doesn't exist (which is what we want)
+            if e.response['Error']['Code'] != '404':
+                raise
+        
         print(f"Uploading {file_name} to s3://{BUCKET_NAME}/...")
         
         # Upload the PDF

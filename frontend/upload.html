@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Document - Miro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .file-drop-zone {
+            border: 2px dashed #d4d4d8;
+            transition: all 0.3s ease;
+        }
+        .file-drop-zone.drag-over {
+            border-color: #1E3A8A;
+            background-color: #eff6ff;
+        }
+        
+        /* Rainbow gradient animation */
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .rainbow-border {
+            position: relative;
+            background: white;
+            border-radius: 1rem;
+            padding: 2px;
+        }
+        
+        .rainbow-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 1rem;
+            padding: 2px;
+            background: linear-gradient(
+                90deg,
+                #ff0080,
+                #ff8c00,
+                #40e0d0,
+                #4169e1,
+                #9370db,
+                #ff0080
+            );
+            background-size: 300% 300%;
+            animation: rainbow 3s ease infinite;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+        
+        .rainbow-glow {
+            position: relative;
+        }
+        
+        .rainbow-glow::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 1rem;
+            background: linear-gradient(
+                90deg,
+                #ff0080,
+                #ff8c00,
+                #40e0d0,
+                #4169e1,
+                #9370db,
+                #ff0080
+            );
+            background-size: 300% 300%;
+            animation: rainbow 3s ease infinite;
+            filter: blur(20px);
+            opacity: 0.7;
+            z-index: -1;
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: linear-gradient(
+                90deg,
+                #ff0080,
+                #ff8c00,
+                #40e0d0,
+                #4169e1,
+                #9370db,
+                #ff0080
+            );
+            background-size: 300% 300%;
+            animation: rainbow 3s ease infinite;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-zinc-50 text-zinc-900 antialiased">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-zinc-200">
+        <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="flex items-center gap-2.5 text-base font-semibold tracking-tighter uppercase text-zinc-900 hover:text-zinc-700 transition-colors">
+                    <div class="w-7 h-7 bg-zinc-900 text-white rounded-md flex items-center justify-center text-xs shadow-sm">M</div>
+                    MIRO
+                </a>
+                <span class="text-zinc-300">•</span>
+                <span class="text-sm text-zinc-500">Upload Document</span>
+            </div>
+            <a href="index.html" class="text-sm text-zinc-600 hover:text-zinc-900 transition-colors flex items-center gap-2">
+                <iconify-icon icon="solar:arrow-left-linear"></iconify-icon>
+                Back to Library
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-6 py-12">
+        
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-zinc-900 mb-2">Upload New Document</h1>
+            <p class="text-zinc-600">Add a PDF document to your educational vault with class and subject metadata</p>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="bg-white rounded-2xl border border-zinc-200 shadow-sm p-8">
+            
+            <!-- File Upload Area -->
+            <div class="mb-8">
+                <label class="block text-sm font-semibold text-zinc-900 mb-3">Select PDF File</label>
+                
+                <div id="dropZone" class="file-drop-zone rounded-xl p-12 text-center cursor-pointer hover:border-zinc-400 transition-all">
+                    <input type="file" id="fileInput" accept=".pdf" class="hidden">
+                    
+                    <div id="dropZoneContent">
+                        <div class="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <iconify-icon icon="solar:cloud-upload-linear" class="text-3xl text-zinc-400"></iconify-icon>
+                        </div>
+                        <p class="text-base font-medium text-zinc-900 mb-1">Click to upload or drag and drop</p>
+                        <p class="text-sm text-zinc-500">PDF files only (Max 50MB)</p>
+                    </div>
+
+                    <div id="filePreview" class="hidden">
+                        <div class="flex items-center justify-center gap-4 p-4 bg-zinc-50 rounded-lg">
+                            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                <iconify-icon icon="solar:document-text-bold" class="text-2xl text-red-600"></iconify-icon>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <p id="fileName" class="text-sm font-medium text-zinc-900"></p>
+                                <p id="fileSize" class="text-xs text-zinc-500"></p>
+                            </div>
+                            <button type="button" onclick="clearFile()" class="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                <iconify-icon icon="solar:trash-bin-minimalistic-linear" class="text-xl"></iconify-icon>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metadata Form -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                
+                <!-- Class Selection -->
+                <div>
+                    <label for="classSelect" class="block text-sm font-semibold text-zinc-900 mb-3">Class Number</label>
+                    <select id="classSelect" class="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                        <option value="">Select class...</option>
+                        <option value="1">Class 1</option>
+                        <option value="2">Class 2</option>
+                        <option value="3">Class 3</option>
+                        <option value="4">Class 4</option>
+                        <option value="5">Class 5</option>
+                        <option value="6">Class 6</option>
+                        <option value="7">Class 7</option>
+                        <option value="8">Class 8</option>
+                        <option value="9">Class 9</option>
+                        <option value="10">Class 10</option>
+                        <option value="11">Class 11</option>
+                        <option value="12">Class 12</option>
+                    </select>
+                </div>
+
+                <!-- Subject Selection -->
+                <div>
+                    <label for="subjectSelect" class="block text-sm font-semibold text-zinc-900 mb-3">Subject</label>
+                    <select id="subjectSelect" class="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                        <option value="">Select subject...</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Physics">Physics</option>
+                        <option value="Chemistry">Chemistry</option>
+                        <option value="Biology">Biology</option>
+                        <option value="English">English</option>
+                        <option value="History">History</option>
+                        <option value="Geography">Geography</option>
+                        <option value="Computer Science">Computer Science</option>
+                        <option value="General">General</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Upload Summary -->
+            <div id="uploadSummary" class="hidden mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="flex items-start gap-3">
+                    <iconify-icon icon="solar:info-circle-linear" class="text-xl text-blue-600 mt-0.5"></iconify-icon>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-blue-900 mb-2">Upload Summary</p>
+                        <div class="text-sm text-blue-800 space-y-1">
+                            <p><span class="font-medium">File:</span> <span id="summaryFileName"></span></p>
+                            <p><span class="font-medium">Class:</span> <span id="summaryClass"></span></p>
+                            <p><span class="font-medium">Subject:</span> <span id="summarySubject"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3">
+                <button type="button" onclick="window.location.href='index.html'" class="flex-1 px-6 py-3 bg-zinc-100 text-zinc-700 rounded-lg font-medium hover:bg-zinc-200 transition-colors">
+                    Cancel
+                </button>
+                <button type="button" id="uploadBtn" onclick="uploadDocument()" class="flex-1 px-6 py-3 bg-zinc-900 text-white rounded-lg font-medium hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2">
+                    <iconify-icon icon="solar:cloud-upload-linear" class="text-xl"></iconify-icon>
+                    Upload Document
+                </button>
+            </div>
+
+            <!-- Upload Progress -->
+            <div id="uploadProgress" class="hidden mt-6">
+                <div class="rainbow-border rainbow-glow">
+                    <div class="bg-white rounded-xl p-6">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-full flex items-center justify-center animate-pulse">
+                                <iconify-icon icon="solar:cloud-upload-bold" class="text-2xl text-white"></iconify-icon>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-base font-semibold text-zinc-900 mb-1">Uploading your document...</p>
+                                <p class="text-sm text-zinc-600">Please wait while we process your file</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Animated progress bar -->
+                        <div class="w-full bg-zinc-100 rounded-full h-1 overflow-hidden">
+                            <div class="progress-bar w-full h-full"></div>
+                        </div>
+                        
+                        <div class="mt-4 flex items-center justify-center gap-2 text-xs text-zinc-500">
+                            <iconify-icon icon="solar:shield-check-linear" class="text-sm"></iconify-icon>
+                            <span>Securely uploading to cloud storage</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guidelines -->
+        <div class="mt-8 p-6 bg-zinc-100 rounded-xl">
+            <h3 class="text-sm font-semibold text-zinc-900 mb-3 flex items-center gap-2">
+                <iconify-icon icon="solar:info-circle-linear" class="text-lg"></iconify-icon>
+                Upload Guidelines
+            </h3>
+            <ul class="text-sm text-zinc-600 space-y-2">
+                <li class="flex items-start gap-2">
+                    <iconify-icon icon="solar:check-circle-linear" class="text-green-600 mt-0.5"></iconify-icon>
+                    Only PDF files are supported
+                </li>
+                <li class="flex items-start gap-2">
+                    <iconify-icon icon="solar:check-circle-linear" class="text-green-600 mt-0.5"></iconify-icon>
+                    Maximum file size is 50MB
+                </li>
+                <li class="flex items-start gap-2">
+                    <iconify-icon icon="solar:check-circle-linear" class="text-green-600 mt-0.5"></iconify-icon>
+                    Files with duplicate names will be rejected
+                </li>
+                <li class="flex items-start gap-2">
+                    <iconify-icon icon="solar:check-circle-linear" class="text-green-600 mt-0.5"></iconify-icon>
+                    Class and subject metadata is required
+                </li>
+                <li class="flex items-start gap-2">
+                    <iconify-icon icon="solar:check-circle-linear" class="text-green-600 mt-0.5"></iconify-icon>
+                    Use descriptive filenames for better organization
+                </li>
+            </ul>
+        </div>
+    </main>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <iconify-icon icon="solar:check-circle-bold" class="text-2xl text-green-600"></iconify-icon>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-zinc-900">Upload Successful</h3>
+                    <p class="text-sm text-zinc-500">Your document has been uploaded</p>
+                </div>
+            </div>
+            
+            <div class="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                <p id="successMessage" class="text-sm text-green-900"></p>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="resetForm()" class="flex-1 px-4 py-2.5 bg-zinc-100 text-zinc-700 rounded-lg font-medium hover:bg-zinc-200 transition-colors">
+                    Upload Another
+                </button>
+                <button onclick="window.location.href='index.html'" class="flex-1 px-4 py-2.5 bg-zinc-900 text-white rounded-lg font-medium hover:bg-zinc-800 transition-colors">
+                    View Library
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <iconify-icon icon="solar:danger-circle-bold" class="text-2xl text-red-600"></iconify-icon>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-zinc-900">Upload Failed</h3>
+                    <p class="text-sm text-zinc-500">Something went wrong</p>
+                </div>
+            </div>
+            
+            <div class="mb-6 p-4 bg-red-50 rounded-lg border border-red-200">
+                <p id="errorMessage" class="text-sm text-red-900"></p>
+            </div>
+
+            <button onclick="closeErrorModal()" class="w-full px-4 py-2.5 bg-zinc-900 text-white rounded-lg font-medium hover:bg-zinc-800 transition-colors">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+        let selectedFile = null;
+
+        // File input and drop zone
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const dropZoneContent = document.getElementById('dropZoneContent');
+        const filePreview = document.getElementById('filePreview');
+
+        // Click to upload
+        dropZone.addEventListener('click', () => {
+            if (!filePreview.classList.contains('hidden')) return;
+            fileInput.click();
+        });
+
+        // File selected
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        // Drag and drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            handleFile(e.dataTransfer.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file) return;
+
+            // Validate file type
+            if (!file.name.endsWith('.pdf')) {
+                showError('Invalid file type. Please select a PDF file.');
+                return;
+            }
+
+            // Validate file size (50MB)
+            if (file.size > 50 * 1024 * 1024) {
+                showError('File is too large. Maximum size is 50MB.');
+                return;
+            }
+
+            selectedFile = file;
+
+            // Show file preview
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            dropZoneContent.classList.add('hidden');
+            filePreview.classList.remove('hidden');
+
+            updateSummary();
+        }
+
+        function clearFile() {
+            selectedFile = null;
+            fileInput.value = '';
+            dropZoneContent.classList.remove('hidden');
+            filePreview.classList.add('hidden');
+            document.getElementById('uploadSummary').classList.add('hidden');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // Update summary when form changes
+        document.getElementById('classSelect').addEventListener('change', updateSummary);
+        document.getElementById('subjectSelect').addEventListener('change', updateSummary);
+
+        function updateSummary() {
+            const classNum = document.getElementById('classSelect').value;
+            const subject = document.getElementById('subjectSelect').value;
+
+            if (selectedFile && classNum && subject) {
+                document.getElementById('summaryFileName').textContent = selectedFile.name;
+                document.getElementById('summaryClass').textContent = `Class ${classNum}`;
+                document.getElementById('summarySubject').textContent = subject;
+                document.getElementById('uploadSummary').classList.remove('hidden');
+            } else {
+                document.getElementById('uploadSummary').classList.add('hidden');
+            }
+        }
+
+        async function uploadDocument() {
+            // Validate inputs
+            if (!selectedFile) {
+                showError('Please select a PDF file to upload.');
+                return;
+            }
+
+            const classNum = document.getElementById('classSelect').value;
+            const subject = document.getElementById('subjectSelect').value;
+
+            if (!classNum) {
+                showError('Please select a class number.');
+                return;
+            }
+
+            if (!subject) {
+                showError('Please select a subject.');
+                return;
+            }
+
+            // Show progress
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('uploadProgress').classList.remove('hidden');
+
+            try {
+                // Create form data
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('class_num', classNum);
+                formData.append('subject', subject);
+
+                // Upload to server
+                const response = await fetch(`${API_BASE_URL}/api/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Upload failed');
+                }
+
+                // Show success
+                document.getElementById('successMessage').textContent = 
+                    `"${data.filename}" has been successfully uploaded to Class ${data.class} - ${data.subject}.`;
+                document.getElementById('successModal').classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                showError(error.message);
+            } finally {
+                document.getElementById('uploadBtn').disabled = false;
+                document.getElementById('uploadProgress').classList.add('hidden');
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorModal').classList.remove('hidden');
+        }
+
+        function closeErrorModal() {
+            document.getElementById('errorModal').classList.add('hidden');
+        }
+
+        function resetForm() {
+            clearFile();
+            document.getElementById('classSelect').value = '';
+            document.getElementById('subjectSelect').value = '';
+            document.getElementById('successModal').classList.add('hidden');
+        }
+
+        // Close modals on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeErrorModal();
+            }
+        });
+    </script>
+
+</body>
+</html>
