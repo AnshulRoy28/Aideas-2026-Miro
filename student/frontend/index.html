@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miro - Your Learning Companion</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Baymax Character Container -->
+        <div id="baymax-container">
+            <svg id="baymax" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+                <!-- Body with gradient -->
+                <defs>
+                    <radialGradient id="bodyGradient" cx="30%" cy="30%">
+                        <stop offset="0%" style="stop-color:#FFFFFF" />
+                        <stop offset="100%" style="stop-color:#E8EDF2" />
+                    </radialGradient>
+                </defs>
+                
+                <!-- Main Body (Weighted Pear Shape) -->
+                <path id="body" 
+                      d="M50,10 C30,10 10,40 10,80 C10,110 30,120 50,120 C70,120 90,110 90,80 C90,40 70,10 50,10 Z"
+                      fill="url(#bodyGradient)"
+                      stroke="#D1D9E0"
+                      stroke-width="1"/>
+                
+                <!-- Left Arm Nub -->
+                <ellipse id="left-arm" cx="20" cy="60" rx="10" ry="15" 
+                         fill="#FFFFFF" stroke="#D1D9E0" stroke-width="0.8"/>
+                
+                <!-- Right Arm Nub -->
+                <ellipse id="right-arm" cx="80" cy="60" rx="10" ry="15" 
+                         fill="#FFFFFF" stroke="#D1D9E0" stroke-width="0.8"/>
+                
+                <!-- Left Leg Nub -->
+                <rect id="left-leg" x="35" y="115" width="12" height="8" rx="5" 
+                      fill="#FFFFFF" stroke="#D1D9E0" stroke-width="0.8"/>
+                
+                <!-- Right Leg Nub -->
+                <rect id="right-leg" x="53" y="115" width="12" height="8" rx="5" 
+                      fill="#FFFFFF" stroke="#D1D9E0" stroke-width="0.8"/>
+                
+                <!-- Face Group -->
+                <g id="face">
+                    <!-- Left Eye -->
+                    <circle id="left-eye" cx="41" cy="42" r="2.5" fill="#2D2D2D"/>
+                    
+                    <!-- Right Eye -->
+                    <circle id="right-eye" cx="59" cy="42" r="2.5" fill="#2D2D2D"/>
+                    
+                    <!-- Eye Bridge -->
+                    <line id="eye-bridge" x1="43.5" y1="42" x2="56.5" y2="42" 
+                          stroke="#2D2D2D" stroke-width="0.8"/>
+                </g>
+            </svg>
+        </div>
+
+        <!-- Status Indicator -->
+        <div id="status" class="status-idle">Ready</div>
+
+        <!-- Input Section -->
+        <div class="input-section">
+            <input type="text" 
+                   id="text-input" 
+                   class="text-input" 
+                   placeholder="Type your question here..."
+                   autocomplete="off">
+            <button id="send-btn" class="send-button">
+                <span>Send</span>
+            </button>
+            <button id="voice-btn" class="voice-button">
+                <span class="mic-icon">🎤</span>
+            </button>
+        </div>
+
+        <!-- Response Display -->
+        <div id="response-container" class="hidden">
+            <div id="response-text"></div>
+            <div id="sources"></div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

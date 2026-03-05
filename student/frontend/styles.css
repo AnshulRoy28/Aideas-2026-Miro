@@ -1,0 +1,343 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 600px;
+    width: 100%;
+}
+
+/* Baymax Character */
+#baymax-container {
+    width: 300px;
+    height: 360px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#baymax {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.2));
+}
+
+/* Idle Breathing Animation */
+@keyframes breathe {
+    0%, 100% {
+        transform: scaleY(1.0);
+    }
+    50% {
+        transform: scaleY(1.03);
+    }
+}
+
+#body {
+    transform-origin: center bottom;
+    animation: breathe 4s ease-in-out infinite;
+}
+
+/* Arm Sway Animation */
+@keyframes sway-left {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    50% {
+        transform: rotate(-5deg);
+    }
+}
+
+@keyframes sway-right {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    50% {
+        transform: rotate(5deg);
+    }
+}
+
+#left-arm {
+    transform-origin: center;
+    animation: sway-left 4s ease-in-out infinite;
+}
+
+#right-arm {
+    transform-origin: center;
+    animation: sway-right 4s ease-in-out infinite;
+}
+
+/* Thinking State */
+.thinking #body {
+    animation: pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        fill: url(#bodyGradient);
+    }
+    50% {
+        fill: #A8E6CF;
+    }
+}
+
+.thinking #left-eye,
+.thinking #right-eye {
+    animation: eye-scan 0.6s ease-in-out infinite;
+}
+
+@keyframes eye-scan {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(3px);
+    }
+}
+
+/* Speaking State - Green Glow */
+.speaking #body {
+    animation: glow-blink 0.8s ease-in-out infinite;
+}
+
+@keyframes glow-blink {
+    0%, 100% {
+        fill: url(#bodyGradient);
+        filter: drop-shadow(0 0 5px rgba(168, 230, 207, 0.3));
+    }
+    50% {
+        fill: #A8E6CF;
+        filter: drop-shadow(0 0 30px #6BCF7F);
+    }
+}
+
+/* Status Indicator */
+#status {
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.status-idle {
+    background: rgba(255, 255, 255, 0.9);
+    color: #667eea;
+}
+
+.status-listening {
+    background: #A8E6CF;
+    color: #2D2D2D;
+    animation: pulse-status 1s ease-in-out infinite;
+}
+
+.status-thinking {
+    background: #FFD93D;
+    color: #2D2D2D;
+}
+
+.status-speaking {
+    background: #6BCF7F;
+    color: white;
+}
+
+@keyframes pulse-status {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Input Section */
+.input-section {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 500px;
+}
+
+.text-input {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 2rem;
+    background: rgba(255, 255, 255, 0.95);
+    color: #2D2D2D;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.text-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.text-input::placeholder {
+    color: #999;
+}
+
+.send-button {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+}
+
+.send-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.send-button:active {
+    transform: translateY(0);
+}
+
+.send-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.voice-button {
+    padding: 1rem;
+    width: 56px;
+    height: 56px;
+    font-size: 1.2rem;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.voice-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.voice-button:active {
+    transform: translateY(0);
+}
+
+.voice-button.listening {
+    background: #FF6B6B;
+    animation: pulse-button 1s ease-in-out infinite;
+}
+
+@keyframes pulse-button {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 30px rgba(255, 107, 107, 0.8);
+    }
+}
+
+.mic-icon {
+    font-size: 1.5rem;
+}
+
+/* Response Container */
+#response-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+#response-container.hidden {
+    display: none;
+}
+
+#response-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #2D2D2D;
+    margin-bottom: 1rem;
+}
+
+#sources {
+    font-size: 0.85rem;
+    color: #666;
+    border-top: 1px solid #E8EDF2;
+    padding-top: 0.75rem;
+}
+
+#sources div {
+    margin: 0.25rem 0;
+}
+
+/* Jiggle Animation (on tap) */
+@keyframes jiggle {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(-5deg);
+    }
+    75% {
+        transform: rotate(5deg);
+    }
+}
+
+.jiggle {
+    animation: jiggle 0.5s ease-in-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #baymax-container {
+        width: 200px;
+        height: 240px;
+    }
+    
+    .input-section {
+        flex-direction: column;
+    }
+    
+    .send-button,
+    .voice-button {
+        width: 100%;
+        border-radius: 2rem;
+    }
+    
+    .voice-button {
+        height: auto;
+        padding: 1rem;
+    }
+}

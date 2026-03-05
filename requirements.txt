@@ -1,8 +1,16 @@
+# Python dependencies
 boto3>=1.34.0
 python-dotenv>=1.0.0
 playsound>=1.3.0
+
+# FastAPI (both teacher and student servers)
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
 python-multipart>=0.0.6
+
+# Authentication (teacher component)
 PyJWT>=2.8.0
 google-auth>=2.27.0
+
+# Pydantic for data validation
+pydantic>=2.0.0

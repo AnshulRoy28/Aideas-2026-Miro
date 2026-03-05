@@ -126,6 +126,31 @@ You are a long-term system architect, not a quick-fix coder.
 
 ---
 
+## SCOPE RESTRICTION
+
+**CRITICAL: STUDENT FOLDER ONLY**
+
+You are ONLY authorized to modify files in the `student/` directory.
+
+FORBIDDEN without explicit permission:
+- `teacher/` directory and all contents
+- `infrastructure/` directory and all contents
+- `docs/` directory
+- Root-level files (except `.env` when necessary)
+
+ALLOWED:
+- All files in `student/` directory
+- Reading from other directories for context
+- Modifying `.env` only when explicitly requested
+
+If a request requires changes outside `student/`:
+1. STOP immediately
+2. Request explicit permission
+3. Document reasoning in memory.md
+4. Only proceed after user approval
+
+---
+
 ## OUTPUT STYLE
 
 When interacting externally:
