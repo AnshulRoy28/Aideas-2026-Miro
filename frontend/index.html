@@ -28,6 +28,33 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #d4d4d8;
         }
+
+        /* Subtle glow animation */
+        @keyframes softPulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.6; }
+        }
+        
+        @keyframes gentleFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .delete-aura {
+            position: relative;
+            animation: gentleFloat 4s ease-in-out infinite;
+        }
+        
+        .delete-aura::before {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 1.5rem;
+            background: radial-gradient(circle, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.2));
+            animation: softPulse 3s ease-in-out infinite;
+            filter: blur(20px);
+            z-index: -1;
+        }
     </style>
 </head>
 <body class="bg-zinc-50 text-zinc-900 flex flex-col md:flex-row h-screen overflow-hidden antialiased selection:bg-blue-100 selection:text-blue-900">
@@ -203,6 +230,28 @@
                 <button onclick="Modals.confirmDelete()" class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors">
                     Delete
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Progress Modal -->
+    <div id="deleteProgress" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="delete-aura bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                    <iconify-icon icon="solar:trash-bin-minimalistic-bold" class="text-3xl text-white"></iconify-icon>
+                </div>
+                <h3 class="text-xl font-semibold text-zinc-900 mb-2">Deleting Document...</h3>
+                <p class="text-sm text-zinc-600 mb-6">Please wait while we remove your file</p>
+                
+                <div class="w-full bg-zinc-100 rounded-full h-1.5 overflow-hidden">
+                    <div class="h-full bg-red-500 rounded-full" style="width: 100%; animation: pulse 1.5s ease-in-out infinite;"></div>
+                </div>
+                
+                <div class="mt-4 flex items-center justify-center gap-2 text-xs text-zinc-500">
+                    <iconify-icon icon="solar:shield-check-linear" class="text-sm"></iconify-icon>
+                    <span>Securely removing from cloud storage</span>
+                </div>
             </div>
         </div>
     </div>

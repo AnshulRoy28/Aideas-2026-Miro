@@ -16,13 +16,20 @@ const Modals = {
     async confirmDelete() {
         if (!AppState.fileToDelete) return;
 
+        const fileToDelete = AppState.fileToDelete;
+        
+        // Close delete modal and show progress
+        this.closeDeleteModal();
+        document.getElementById('deleteProgress').classList.remove('hidden');
+
         try {
-            await API.deleteDocument(AppState.fileToDelete);
-            this.closeDeleteModal();
+            await API.deleteDocument(fileToDelete);
+            document.getElementById('deleteProgress').classList.add('hidden');
             await DocumentManager.loadDocuments();
             this.showSuccessToast('Document deleted successfully');
         } catch (error) {
             console.error('Error deleting file:', error);
+            document.getElementById('deleteProgress').classList.add('hidden');
             this.showErrorModal('Failed to delete document', error.message);
         }
     },
