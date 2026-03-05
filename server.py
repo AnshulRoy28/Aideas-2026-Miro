@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """FastAPI server for S3 document management."""
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.staticfiles import StaticFiles
 import boto3
 from dotenv import load_dotenv
 import os
 import json
-from datetime import datetime
-from typing import List, Dict, Any
+from datetime import datetime, timedelta
+from typing import List, Dict, Any, Optional
 import time
+import jwt
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 # Load environment variables
 load_dotenv()
@@ -22,6 +27,15 @@ ACCESS_KEY_ID = os.getenv('BEDROCK_UPLOAD_ACCESS_KEY_ID')
 SECRET_ACCESS_KEY = os.getenv('BEDROCK_UPLOAD_SECRET_ACCESS_KEY')
 KNOWLEDGE_BASE_ID = os.getenv('KNOWLEDGE_BASE_ID')
 DATA_SOURCE_ID = os.getenv('DATA_SOURCE_ID')  # New: Data source ID
+
+# Auth Configuration
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+JWT_SECRET = os.getenv('JWT_SECRET', 'your-secret-key-change-in-production')
+JWT_ALGORITHM = 'HS256'
+JWT_EXPIRATION_HOURS = 24
+
+# Security
+security = HTTPBearer()
 
 # Initialize FastAPI app
 app = FastAPI(title="Miro API", version="1.0.0")
@@ -51,10 +65,104 @@ bedrock_agent_client = boto3.client(
     aws_secret_access_key=SECRET_ACCESS_KEY
 )
 
+@app.on_event("startup")
+async def startup_event():
+    """Print helpful information on startup."""
+    print("\n" + "="*60)
+    print("🚀 Miro Server Started Successfully!")
+    print("="*60)
+    print(f"📱 Login Page: http://localhost:8000/login.html")
+    print(f"🏠 Main App:    http://localhost:8000/index.html")
+    print(f"📊 API Docs:    http://localhost:8000/docs")
+    print(f"💚 Health:      http://localhost:8000/health")
+    print("="*60 + "\n")
+
 @app.get("/")
 async def root():
     """Root endpoint."""
     return {"message": "Miro API", "version": "1.0.0"}
+
+@app.get("/api/config")
+async def get_config():
+    """Get public configuration for frontend."""
+    return {
+        "google_client_id": GOOGLE_CLIENT_ID
+    }
+
+# ============= Authentication Endpoints =============
+
+def create_jwt_token(email: str, name: str) -> str:
+    """Create a JWT token for authenticated user."""
+    payload = {
+        'email': email,
+        'name': name,
+        'exp': datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS),
+        'iat': datetime.utcnow()
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def verify_jwt_token(token: str) -> dict:
+    """Verify and decode JWT token."""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    """Dependency to get current authenticated user."""
+    token = credentials.credentials
+    return verify_jwt_token(token)
+
+@app.post("/api/auth/google")
+async def google_auth(request: dict):
+    """Authenticate user with Google OAuth credential."""
+    try:
+        credential = request.get('credential')
+        if not credential:
+            raise HTTPException(status_code=400, detail="No credential provided")
+        
+        # Verify the Google token
+        idinfo = id_token.verify_oauth2_token(
+            credential, 
+            google_requests.Request(), 
+            GOOGLE_CLIENT_ID
+        )
+        
+        # Extract user info
+        email = idinfo.get('email')
+        name = idinfo.get('name')
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="Email not found in token")
+        
+        # Create our own JWT token
+        token = create_jwt_token(email, name)
+        
+        return {
+            "token": token,
+            "email": email,
+            "name": name,
+            "message": "Authentication successful"
+        }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid Google token: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/auth/verify")
+async def verify_token(user: dict = Depends(get_current_user)):
+    """Verify if the current token is valid."""
+    return {
+        "valid": True,
+        "email": user.get('email'),
+        "name": user.get('name')
+    }
+
+# ============= Protected Endpoints =============
 
 def trigger_knowledge_base_sync():
     """Trigger Knowledge Base data source sync/ingestion."""
@@ -143,7 +251,7 @@ async def get_sync_status(ingestion_job_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/documents")
-async def list_documents():
+async def list_documents(user: dict = Depends(get_current_user)):
     """List all PDF documents in the S3 bucket with their metadata."""
     try:
         response = s3_client.list_objects_v2(Bucket=BUCKET_NAME)
@@ -276,7 +384,7 @@ async def get_metadata_json(file_key: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/documents/{file_key:path}")
-async def delete_document(file_key: str):
+async def delete_document(file_key: str, user: dict = Depends(get_current_user)):
     """Delete a document and its metadata from S3."""
     try:
         # Delete the main PDF file
@@ -309,7 +417,7 @@ async def check_document_exists(file_key: str):
         return {"exists": False, "key": file_key}
 
 @app.put("/api/documents/{file_key:path}/rename")
-async def rename_document(file_key: str, new_name: str):
+async def rename_document(file_key: str, new_name: str, user: dict = Depends(get_current_user)):
     """Rename a document (keeps metadata with the file)."""
     try:
         # Validate new name
@@ -370,7 +478,8 @@ async def replace_document(file_key: str):
 async def upload_document(
     file: UploadFile = File(...),
     class_num: str = Form(...),
-    subject: str = Form(...)
+    subject: str = Form(...),
+    user: dict = Depends(get_current_user)
 ):
     """Upload a PDF document with metadata to S3."""
     try:
@@ -443,6 +552,9 @@ async def health_check():
         return {"status": "healthy", "s3_connection": "ok"}
     except Exception as e:
         return {"status": "unhealthy", "error": str(e)}
+
+# Mount static files (frontend) - MUST be last to avoid intercepting API routes
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn

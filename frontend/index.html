@@ -116,10 +116,14 @@
         </nav>
 
         <!-- Bottom Actions -->
-        <div class="p-3 border-t border-zinc-200/50">
-            <button class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-200/50 hover:text-zinc-900 transition-colors">
-                <iconify-icon icon="solar:settings-linear" class="text-zinc-400 text-lg"></iconify-icon>
-                System Config
+        <div class="p-3 border-t border-zinc-200/50 space-y-1">
+            <div class="px-3 py-2 text-xs text-zinc-500">
+                <div class="font-medium text-zinc-700" id="userEmail">Loading...</div>
+                <div id="userName" class="text-zinc-400"></div>
+            </div>
+            <button onclick="logout()" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-200/50 hover:text-zinc-900 transition-colors">
+                <iconify-icon icon="solar:logout-2-linear" class="text-zinc-400 text-lg"></iconify-icon>
+                Logout
             </button>
         </div>
     </aside>
@@ -342,6 +346,30 @@
     
     <!-- Initialize App -->
     <script>
+        // Check authentication
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        // Display user info
+        const userEmail = localStorage.getItem('user_email');
+        const userName = localStorage.getItem('user_name');
+        if (userEmail) {
+            document.getElementById('userEmail').textContent = userEmail;
+        }
+        if (userName) {
+            document.getElementById('userName').textContent = userName;
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_email');
+            localStorage.removeItem('user_name');
+            window.location.href = 'login.html';
+        }
+
         // Initialize modals
         Modals.init();
 
