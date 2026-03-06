@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Assistant Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .status.idle {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status.listening {
+            background: #fff3e0;
+            color: #f57c00;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status.processing {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .status.speaking {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .instructions {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .instructions kbd {
+            background: #f5f5f5;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .transcript {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 60px;
+            color: #333;
+        }
+
+        .transcript.empty {
+            color: #999;
+            font-style: italic;
+        }
+
+        .answer {
+            background: #667eea;
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 80px;
+            line-height: 1.6;
+        }
+
+        .answer.empty {
+            background: #f5f5f5;
+            color: #999;
+            font-style: italic;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .footer {
+            text-align: center;
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+
+        .recording-indicator {
+            width: 20px;
+            height: 20px;
+            background: #f44336;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Voice Assistant</h1>
+        
+        <div class="status idle" id="status">
+            Ready - Hold SPACEBAR to speak
+        </div>
+
+        <div class="instructions">
+            Hold <kbd>SPACEBAR</kbd> and ask a question about your course materials
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="transcript empty" id="transcript">
+            Your question will appear here...
+        </div>
+
+        <div class="answer empty" id="answer">
+            The answer will appear here...
+        </div>
+
+        <div class="footer">
+            Powered by AWS Transcribe, Bedrock, and Polly
+        </div>
+    </div>
+
+    <script>
+        const WS_URL = 'ws://localhost:8002/voice';
+        
+        let ws = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let audioContext = null;
+        let currentAudio = null;
+
+        // DOM elements
+        const statusEl = document.getElementById('status');
+        const transcriptEl = document.getElementById('transcript');
+        const answerEl = document.getElementById('answer');
+        const errorEl = document.getElementById('error');
+
+        // Initialize
+        async function init() {
+            try {
+                // Request microphone access
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // Create MediaRecorder
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm;codecs=opus'
+                });
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = async () => {
+                    if (audioChunks.length > 0) {
+                        await sendAudio();
+                    }
+                };
+
+                // Connect WebSocket
+                connectWebSocket();
+
+                // Setup keyboard listeners
+                setupKeyboardListeners();
+
+                updateStatus('idle', 'Ready - Hold SPACEBAR to speak');
+            } catch (error) {
+                showError('Microphone access denied. Please allow microphone access and refresh.');
+                console.error('Init error:', error);
+            }
+        }
+
+        function connectWebSocket() {
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                handleMessage(message);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                showError('Connection error. Please refresh the page.');
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket closed');
+                setTimeout(connectWebSocket, 3000); // Reconnect after 3s
+            };
+        }
+
+        function setupKeyboardListeners() {
+            let spacePressed = false;
+
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && !spacePressed && !isRecording) {
+                    e.preventDefault();
+                    spacePressed = true;
+                    startRecording();
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                if (e.code === 'Space' && spacePressed) {
+                    e.preventDefault();
+                    spacePressed = false;
+                    stopRecording();
+                }
+            });
+        }
+
+        function startRecording() {
+            if (!mediaRecorder || isRecording) return;
+
+            audioChunks = [];
+            isRecording = true;
+            
+            // Clear previous results
+            transcriptEl.textContent = 'Listening...';
+            transcriptEl.classList.remove('empty');
+            answerEl.textContent = 'Waiting for your question...';
+            answerEl.classList.add('empty');
+            errorEl.classList.remove('show');
+
+            mediaRecorder.start(100); // Collect data every 100ms
+            updateStatus('listening', '🔴 Recording - Release SPACEBAR when done');
+        }
+
+        function stopRecording() {
+            if (!mediaRecorder || !isRecording) return;
+
+            isRecording = false;
+            mediaRecorder.stop();
+            updateStatus('processing', 'Processing your question...');
+        }
+
+        async function sendAudio() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                showError('Not connected to server');
+                return;
+            }
+
+            try {
+                // Convert audio chunks to base64
+                for (const chunk of audioChunks) {
+                    const arrayBuffer = await chunk.arrayBuffer();
+                    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+                    
+                    ws.send(JSON.stringify({
+                        type: 'audio_chunk',
+                        data: base64
+                    }));
+                }
+
+                // Signal end of stream
+                ws.send(JSON.stringify({
+                    type: 'end_of_stream'
+                }));
+
+                // Update status to show transcription in progress
+                updateStatus('processing', '🎧 Transcribing your audio...');
+
+                audioChunks = [];
+            } catch (error) {
+                console.error('Send audio error:', error);
+                showError('Failed to send audio');
+                updateStatus('idle', 'Ready - Hold SPACEBAR to speak');
+            }
+        }
+
+        function handleMessage(message) {
+            console.log('Received:', message.type);
+
+            switch (message.type) {
+                case 'transcript':
+                    transcriptEl.textContent = `You asked: "${message.text}"`;
+                    transcriptEl.classList.remove('empty');
+                    updateStatus('processing', '🔍 Searching knowledge base...');
+                    break;
+
+                case 'answer':
+                    answerEl.textContent = message.text;
+                    answerEl.classList.remove('empty');
+                    updateStatus('processing', '🎙️ Synthesizing speech...');
+                    break;
+
+                case 'audio':
+                    playAudio(message.data);
+                    break;
+
+                case 'error':
+                    showError(message.message);
+                    updateStatus('idle', 'Ready - Hold SPACEBAR to speak');
+                    break;
+            }
+        }
+
+        function playAudio(base64Audio) {
+            try {
+                // Stop any currently playing audio
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                }
+
+                // Convert base64 to blob
+                const binaryString = atob(base64Audio);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes], { type: 'audio/mp3' });
+                const url = URL.createObjectURL(blob);
+
+                // Play audio
+                currentAudio = new Audio(url);
+                currentAudio.onplay = () => {
+                    updateStatus('speaking', '🔊 Speaking...');
+                };
+                currentAudio.onended = () => {
+                    updateStatus('idle', 'Ready - Hold SPACEBAR to speak');
+                    URL.revokeObjectURL(url);
+                    currentAudio = null;
+                };
+                currentAudio.onerror = (error) => {
+                    console.error('Audio playback error:', error);
+                    showError('Failed to play audio');
+                    updateStatus('idle', 'Ready - Hold SPACEBAR to speak');
+                };
+
+                currentAudio.play();
+            } catch (error) {
+                console.error('Play audio error:', error);
+                showError('Failed to play audio');
+                updateStatus('idle', 'Ready - Hold SPACEBAR to speak');
+            }
+        }
+
+        function updateStatus(state, text) {
+            statusEl.className = `status ${state}`;
+            statusEl.textContent = text;
+        }
+
+        function showError(message) {
+            errorEl.textContent = `Error: ${message}`;
+            errorEl.classList.add('show');
+            setTimeout(() => {
+                errorEl.classList.remove('show');
+            }, 5000);
+        }
+
+        // Start on page load
+        init();
+    </script>
+</body>
+</html>
